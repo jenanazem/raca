@@ -1,0 +1,35 @@
+# RACA LLM Fine-tuning + SAE Pipeline
+# Requirements for all 5 phases
+# Install: pip install -r requirements.txt
+
+# ── Core ML stack ──────────────────────────────────
+torch>=2.3.0
+transformers>=4.43.0
+datasets>=2.20.0
+accelerate>=0.30.0
+
+# ── Fine-tuning (Phase 3) ──────────────────────────
+peft>=0.11.0              # LoRA / QLoRA adapters
+bitsandbytes>=0.43.0      # 4-bit quantization
+trl>=0.9.0                # SFTTrainer
+# flash-attn>=2.5.0         # Flash Attention 2 (requires CUDA 11.8+)
+
+# ── Data prep (Phase 1) ────────────────────────────
+scikit-learn>=1.4.0       # train_test_split
+pandas>=2.0.0
+pyarrow>=14.0.0           # HuggingFace datasets backend
+
+# ── SAE training (Phase 4) ─────────────────────────
+# sae-lens>=3.0.0         # Optional: EleutherAI SAELens (recommended for Llama SAEs)
+# transformer-lens>=1.18  # Optional: TransformerLens for activation analysis
+
+# ── HAL reduction / RAG (Phase 5) ─────────────────
+faiss-cpu>=1.8.0          # Vector retrieval (use faiss-gpu if available)
+sentence-transformers>=3.0.0  # Multilingual embeddings for RAG
+
+# ── Logging & monitoring ───────────────────────────
+tensorboard>=2.16.0
+# wandb>=0.17.0           # Optional: Weights & Biases experiment tracking
+
+# ── Utilities ──────────────────────────────────────
+tqdm>=4.66.0

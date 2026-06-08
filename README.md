@@ -40,7 +40,7 @@ pip install -r requirements.txt
 export OPENROUTER_API_KEY=sk-or-xxxxxxxxxxxxxxxx
 
 # 3. Run phases in order
-python phase1_data_prep.py --input_glob "raca_laws_tab*.csv" --output_dir ./data/processed
+python phase1_data_prep.py --input_glob "data/processed/raca_tab*.csv" --output_dir ./data/processed
 python phase2_model_setup.py --skip_model_load
 python phase3_finetune.py --config ./data/processed/project_config.json --data_dir ./data/processed --output_dir ./checkpoints/ft_raca
 python phase4_sae_training.py --config ./data/processed/project_config.json --model_path ./checkpoints/ft_raca/merged --data_dir ./data/processed --output_dir ./checkpoints/sae_raca

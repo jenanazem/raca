@@ -12,7 +12,7 @@ accelerate>=0.30.0
 peft>=0.11.0              # LoRA / QLoRA adapters
 bitsandbytes>=0.43.0      # 4-bit quantization
 trl>=0.9.0                # SFTTrainer
-# flash-attn>=2.5.0         # Flash Attention 2 (requires CUDA 11.8+)
+flash-attn>=2.5.0         # Flash Attention 2 (requires CUDA 11.8+)
 
 # ── Data prep (Phase 1) ────────────────────────────
 scikit-learn>=1.4.0       # train_test_split

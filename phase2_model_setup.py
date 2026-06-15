@@ -25,6 +25,7 @@ Usage:
 import argparse
 import json
 from pathlib import Path
+from typing import Optional, Dict, Any
 
 import torch
 from transformers import (
@@ -109,7 +110,7 @@ def setup_tokenizer(model_id: str, cache_dir: Optional[str] = None):
     - pad_token: Many models lack a pad token; we add one
     - trust_remote_code: Needed for some models (e.g. Jais)
     """
-    from typing import Optional  # local import to avoid top-level issue
+    from typing import Optional, Optional  # local import to avoid top-level issue
     
     print(f"\n  Loading tokenizer: {model_id}")
     tokenizer = AutoTokenizer.from_pretrained(
@@ -168,7 +169,7 @@ def load_base_model(
       - bf16 or fp16
       - Loads ~14-16GB for a 7-8B model
     """
-    from typing import Optional
+    from typing import Optional, Optional
     
     torch_dtype = torch.bfloat16 if dtype == 'bfloat16' else torch.float16
     
@@ -308,7 +309,7 @@ def main():
                         help='Skip loading model weights (just check env and config)')
     args = parser.parse_args()
 
-    from typing import Optional  # ensure available in main scope
+    from typing import Optional, Optional  # ensure available in main scope
     
     print("\n=== Phase 2: Model Selection & Setup ===\n")
     

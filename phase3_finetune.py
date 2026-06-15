@@ -187,7 +187,7 @@ def build_training_args(config: dict, output_dir: str) -> SFTConfig:
         fp16=config['dtype'] == 'float16',
 
         # Sequence length
-        max_seq_length=config['max_seq_length'],
+        max_length=config['max_seq_length'],
         dataset_text_field='text',       # column in the dataset containing the full ChatML string
         packing=False,                   # set True to pack multiple short samples into one sequence
 
@@ -205,7 +205,6 @@ def build_training_args(config: dict, output_dir: str) -> SFTConfig:
         # Misc
         report_to='tensorboard',        # change to 'wandb' if you use Weights & Biases
         dataloader_num_workers=4,
-        group_by_length=True,           # group similar-length samples → faster training
         seed=42,
     )
 
@@ -244,10 +243,10 @@ def train(config: dict, data_dir: Path, output_dir: Path):
         print(f"\n[4/5] Stage A — CPT pre-training ({n_epochs_cpt} epoch)...")
         cpt_args = build_training_args(config, str(output_dir / 'cpt_run'))
         # Override epochs for CPT stage
-        cpt_args = cpt_args.replace(num_train_epochs=n_epochs_cpt)
+        cpt_args.num_train_epochs = n_epochs_cpt
         cpt_trainer = SFTTrainer(
             model=model,
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             args=cpt_args,
             train_dataset=cpt_dataset['train'],
             eval_dataset=cpt_dataset['validation'],
@@ -262,11 +261,11 @@ def train(config: dict, data_dir: Path, output_dir: Path):
     n_epochs_sft = config.get('num_train_epochs_sft', 3)
     print(f"\n[5/5] Stage B — SFT instruction fine-tuning ({n_epochs_sft} epochs)...")
     sft_args = build_training_args(config, str(output_dir / 'sft_run'))
-    sft_args = sft_args.replace(num_train_epochs=n_epochs_sft)
+    sft_args.num_train_epochs = n_epochs_sft
 
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         args=sft_args,
         train_dataset=sft_dataset['train'],
         eval_dataset=sft_dataset['validation'],

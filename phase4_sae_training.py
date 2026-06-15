@@ -27,6 +27,10 @@ Usage:
 """
 
 import json
+
+def load_config(path):
+    with open(path) as f:
+        return json.load(f)
 import argparse
 from pathlib import Path
 
@@ -72,8 +76,7 @@ class ActivationCollector:
         def hook_fn(module, input, output):
             # output is a tuple; first element is the hidden state tensor
             hidden = output[0]               # shape: [batch, seq_len, hidden_dim]
-            # Collect all token positions except padding
-            self.activations.append(hidden.detach().float().cpu())
+            self.activations.append(hidden.detach().float().cpu())  # store full tensor
         
         self.hook = target_layer.register_forward_hook(hook_fn)
         print(f"  Hooked layer {layer_idx}: {target_layer.__class__.__name__}")
@@ -82,9 +85,8 @@ class ActivationCollector:
         """Stack and return all collected activations as [N, hidden_dim]."""
         if not self.activations:
             return torch.empty(0)
-        all_acts = torch.cat(self.activations, dim=0)  # [total_tokens, hidden_dim]
-        # Reshape to [N_tokens, hidden_dim] by flattening batch and seq dims
-        return all_acts.view(-1, all_acts.shape[-1])
+        all_acts = torch.cat([a.view(-1, a.shape[-1]) for a in self.activations], dim=0)  # [batch*seq, hidden_dim]
+        return all_acts
     
     def clear(self):
         self.activations = []
@@ -161,9 +163,10 @@ def collect_activations(
             _ = model(**inputs)
             
             # Get activations, mask padding tokens
-            acts = collector.get_activations()
-            attention_mask = inputs['attention_mask'].flatten().cpu()
-            acts = acts[attention_mask.bool()]  # remove padding positions
+            acts = collector.get_activations()  # [batch*seq, hidden]
+            attention_mask = inputs['attention_mask'].bool().cpu().reshape(-1)[:acts.shape[0]]  # [batch*seq]
+            print(f"DEBUG acts shape: {acts.shape}, mask shape: {attention_mask.shape}")
+            acts = acts[attention_mask]  # remove padding positions
             
             all_activations.append(acts.half())  # store in fp16 to save memory
             collector.clear()

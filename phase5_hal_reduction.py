@@ -145,28 +145,30 @@ class ActivationSteerer:
         coeff = self.steering_coefficient
         
         def hook_fn(module, input, output):
-            h = output[0].float()               # [batch, seq_len, hidden_dim]
-            b, s, d = h.shape
-            h_flat = h.view(-1, d)
+            # Get hidden states - handle both tuple and tensor outputs
+            if isinstance(output, tuple):
+                h = output[0]
+            else:
+                h = output
+            
+            orig_dtype = h.dtype
+            orig_shape = h.shape
+            h_flat = h.float().reshape(-1, h.shape[-1])
             
             with torch.no_grad():
-                # Encode
+                sae.to(h_flat.device)
                 feature_acts = sae.encode(h_flat)
-                
-                # Suppress hallucination features
                 feature_acts_modified = feature_acts.clone()
                 feature_acts_modified[:, hal_ids] *= (1 - coeff)
-                
-                # Reconstruct steered activations
                 h_steered = sae.decode(feature_acts_modified)
                 h_original_recon = sae.decode(feature_acts)
-                
-                # Apply steering as a correction to the residual stream
-                correction = (h_steered - h_original_recon).view(b, s, d)
-                h_new = (h + correction).to(output[0].dtype)
+                correction = (h_steered - h_original_recon).reshape(orig_shape).to(orig_dtype)
+                h_new = h + correction
             
-            # Return modified output (keep rest of output tuple unchanged)
-            return (h_new,) + output[1:]
+            if isinstance(output, tuple):
+                return (h_new,) + output[1:]
+            else:
+                return h_new
         
         self.hook = target_layer.register_forward_hook(hook_fn)
     
@@ -208,6 +210,7 @@ class HallucinationScorer:
             h_flat = h.view(-1, h.shape[-1])
             
             with torch.no_grad():
+                sae.to(h_flat.device)
                 feature_acts = sae.encode(h_flat)
                 # Score = mean activation of hal features normalized by max possible
                 hal_acts = feature_acts[:, hal_ids]
